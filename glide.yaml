@@ -1,4 +1,4 @@
-package: github.com/maxthomas/gomosesgo
+package: github.com/qntfy/gomosesgo
 import:
 - package: github.com/gin-gonic/gin
   version: ^1.1
