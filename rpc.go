@@ -49,15 +49,6 @@ func (p *RPCPool) Translate(text string) (string, error) {
 	return cli.Translate(text)
 }
 
-// Health is a thread-safe wrapper around Health from
-// the RPCTranslate endpoint
-func (p *RPCPool) Health() (bool, error) {
-	cli := p.pool.Get().(*RPCTranslate)
-	defer p.pool.Put(cli)
-
-	return cli.Health()
-}
-
 // RPCTranslate wraps the XMLRPC client
 type RPCTranslate struct {
 	*xmlrpc.Client
@@ -81,18 +72,4 @@ func (client *RPCTranslate) Translate(in string) (string, error) {
 	}
 
 	return result.Text, nil
-}
-
-// Health calls the translate rpc server to see if it's alive. Returns
-// true if ok, and false/error otherwise
-func (client *RPCTranslate) Health() (bool, error) {
-	send := RPCTranslateMessage{}
-	res := new(RPCTranslateMessage)
-	healthCall := client.Go("translate", send, res, nil)
-	finishedCall := <-healthCall.Done
-	if finishedCall.Error != nil {
-		return false, finishedCall.Error
-	}
-
-	return true, nil
 }

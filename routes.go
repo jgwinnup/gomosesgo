@@ -12,14 +12,7 @@ type TranslationRequest struct {
 }
 
 func routeHealth(c *gin.Context) {
-	client := c.MustGet("rpc").(*RPCPool)
-
-	ok, err := client.Health()
-	if ok {
-		c.JSON(200, gin.H{"status": "ok"})
-	} else {
-		c.JSON(500, gin.H{"status": "down", "error": err.Error()})
-	}
+	c.JSON(200, gin.H{"status": "ok"})
 }
 
 func routeTranslate(c *gin.Context) {
