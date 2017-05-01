@@ -81,7 +81,10 @@ func main() {
 	if *verbose {
 		log, _ = zap.NewDevelopment(zapOptions...)
 	} else {
-		log, _ = zap.NewProduction(zapOptions...)
+		cfg := zap.NewProductionConfig()
+		// only log at warn+
+		cfg.Level = zap.NewAtomicLevelAt(zap.WarnLevel)
+		log, _ = cfg.Build(zapOptions...)
 	}
 
 	mainLog := log.With(zap.String("module", "main"))
