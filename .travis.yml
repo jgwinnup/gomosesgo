@@ -1,0 +1,33 @@
+language: go
+go:
+- tip
+before_install:
+- mkdir -p $GOPATH/bin
+- go get github.com/Masterminds/glide
+- which python3.5
+- which glide
+addons:
+  apt:
+    sources:
+    - deadsnakes
+    packages:
+    - python3.5
+install:
+- glide up
+- go get golang.org/x/tools/cmd/cover
+- go get github.com/mitchellh/gox
+- python3.5 mock-server.py &
+script:
+- go test -cover -race -cpu 1,2,4 -timeout=15000ms
+- gox -osarch "linux/amd64" -output "dist/gomosesgo_{{.OS}}_{{.Arch}}" .
+deploy:
+  provider: releases
+  api_key:
+    secure: rRPdCGGV4Uij+SEKdgqJxVRDYZlZFtoOr4EB063EIBNyo1EiA+twqkWatBdBKpUGd+xO/b2zjGWvUpbXD0mm1iBcmhzrgUSZHv9Xh2KY5vjWoAwWnZUBAg3YF1fEOj7fKPUde9faiRYLwSxoQd9OLQSP4pTjtVyxQZmqrczN/1jWU4aDCM12BIc+Ty8Gj07KMkizbkddInKavvPNV2HTHlW80c8f7Y+28Owm4a5PZWHrL8SMD3PjYwKud/J7bAbknRJeopMEGSaFbqJxI4+U9alll6CI8MKZ5W/zaMMfNNVFIfhdEfi9ccAR2uRDG7QEAZ+GcwNR5mSTu3nqdM1qlofc/x9ISOCxFmAcOP8m841bKFYPOg1K6yJIDFSJ30Rk4v+3aY4h22oGYNGYPQKn4F0c8d97Z3kwYAII/g4MACaEQomC56YPd+xi9Bd9ACwegfcXkA3TFCm1twDJZVodN05Oan0aVhr4nzaHRjvk9pAUzQiouOWhl057hMjuBu839KBqM40bL0uExK8BFTMPDlfE6Fu598ta5Xb5n4PDJAU3DKyneAzQ4Lewv5UxaDJBU72f4g/Dmn9RnTztZiTFvkCc2CKWQxXhXhpwkhUPmaWyEK4fGAn9qeTgKYZ+73bSB1tlBl755p7kQKxReJ3RD8ofw+A73d6dbZIRflzloKE=
+  file: dist/gomosesgo_linux_amd64
+  skip_cleanup: true
+  on:
+    repo: qntfy/gomosesgo
+    tags: true
+env:
+  global:

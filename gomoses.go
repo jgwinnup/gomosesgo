@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kolo/xmlrpc"
 	"go.uber.org/zap"
 )
 
@@ -15,9 +14,9 @@ var (
 	scriptPath = flag.String("scripts", "", "Path to [pre/post]-processing scripts")
 	verbose    = flag.Bool("verbose", false, "Turn on verbose logging")
 	debugMode  = flag.Bool("debug", false, "Run in debug mode")
-	maxConns   = flag.Int("maxConns", 12, "Maximum number of simultaneous connections to allow")
+	maxConns   = flag.Int("maxConns", 240, "Maximum number of simultaneous connections to allow")
 	port       = flag.Int("port", 8080, "Default port to listen on")
-	log        *zap.Logger
+	log, _     = zap.NewProduction()
 )
 
 func zapLogger() gin.HandlerFunc {
@@ -35,7 +34,7 @@ func zapLogger() gin.HandlerFunc {
 }
 
 // addToGinContext is a middleware which provides the rpc client to handlers
-func addToGinContext(client *RPCTranslate, tf *TranslationTransformer) gin.HandlerFunc {
+func addToGinContext(client *RPCPool, tf *TranslationTransformer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Set("rpc", client)
 		c.Set("tf", tf)
@@ -55,7 +54,7 @@ func maxAllowed(n int) gin.HandlerFunc {
 	}
 }
 
-func getGinEngine(client *RPCTranslate, tf *TranslationTransformer, maxConns int, debug bool) (r *gin.Engine) {
+func getGinEngine(client *RPCPool, tf *TranslationTransformer, maxConns int, debug bool) (r *gin.Engine) {
 	if !debug {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -82,7 +81,10 @@ func main() {
 	if *verbose {
 		log, _ = zap.NewDevelopment(zapOptions...)
 	} else {
-		log, _ = zap.NewProduction(zapOptions...)
+		cfg := zap.NewProductionConfig()
+		// only log at warn+
+		cfg.Level = zap.NewAtomicLevelAt(zap.WarnLevel)
+		log, _ = cfg.Build(zapOptions...)
 	}
 
 	mainLog := log.With(zap.String("module", "main"))
@@ -91,18 +93,14 @@ func main() {
 		mainLog.Fatal("Must specify URI of Moses RPC server and path to library scripts")
 	}
 
-	client, clientErr := xmlrpc.NewClient(*mosesURI, nil)
-	if clientErr != nil {
-		mainLog.Fatal("Unable to connect to RPC server", zap.Error(clientErr))
-	}
 	tf, tfErr := NewTranslationTransformer(*scriptPath)
 	if tfErr != nil {
 		mainLog.Fatal("Unable to generate transformers", zap.Error(tfErr))
 	}
 
 	mainLog.Info("Starting server")
-	rpc := RPCTranslate{client}
-	r := getGinEngine(&rpc, &tf, *maxConns, *debugMode)
+	rpc := NewRPCPool(*mosesURI)
+	r := getGinEngine(rpc, &tf, *maxConns, *debugMode)
 	portStr := strconv.Itoa(*port)
 	mainLog.Info("Backend started on port" + portStr)
 	r.Run(":" + portStr) // listen and server on 0.0.0.0:8080
