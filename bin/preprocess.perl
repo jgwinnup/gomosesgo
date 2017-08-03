@@ -38,7 +38,8 @@ my @protected_patterns = (
     qr{(http[s]?|ftp):\/\/},                     #URL2
     qr{#[\s]*[\p{Letter}\p{Number}_]{2,}},       #HASHTAG (1)
     qr{#[\s]*[\p{L}\p{N}\p{M}_]{2,}},            #HASHTAG (2)
-    qr{([\(]*http[s]?|ftp):\/[^:\/\s]+(\/\w+)*[\w\-\.\/#]+},   #URL3
+    qr{([\(]*http[s]?|ftp):\/[^:\/\s]+(\/\w+)*[\w\-\.\/#\)]+},   #URL3
+    #qr{[\(]*http[s]?|ftp:\/[^:\/\s]+\/\w+[\w\-\.\/#\)]+},   #URL3
     qr{#}, #HASH
     qr{^[Rr][Tt][:]*} #RETWEET
 );
@@ -71,11 +72,11 @@ sub normalizePunctuation {
 
     $line =~ s/\r//g;
     # remove extra spaces
-    $line =~ s/\(/ \(/g;
-    $line =~ s/\)/\) /g; s/ +/ /g;
+    #$line =~ s/\(/ \(/g;
+    #$line =~ s/\)/\) /g; s/ +/ /g;
     $line =~ s/\) ([\.\!\:\?\;\,])/\)$1/g;
-    $line =~ s/\( /\(/g;
-    $line =~ s/ \)/\)/g;
+    #$line =~ s/\( /\(/g;
+    #$line =~ s/ \)/\)/g;
     $line =~ s/(\d) \%/$1\%/g;
     $line =~ s/ :/:/g;
     $line =~ s/ ;/;/g;
@@ -306,6 +307,13 @@ while (my $line = <STDIN>) {
     
     # remove-non-printing-characters.perl
     $line = removeNonPrintingCharacters($line);
+
+    #remove illegal chars like pipe '|'
+    $line =~ s/\|/ /g;    
+
+    # Head off problematic parens around URLS...
+    $line =~ s/\(/ \( /g;
+    $line =~ s/\)/ \) /g;
 
     # remove-diacritics.perl
     $line = removeDiacritics($line);
