@@ -303,6 +303,11 @@ sub tokenize
 while (my $line = <STDIN>) {
     
     chomp($line);
+
+    #remove any newline chars
+    #this should be done in gomosesgo code -
+    #pretty sure we won't see newlines by this point...
+    $line =~ s/\n/ /g;
     
     # remove-non-printing-characters.perl
     $line = removeNonPrintingCharacters($line);
