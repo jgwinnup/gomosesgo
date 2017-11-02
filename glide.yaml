@@ -1,0 +1,10 @@
+package: github.com/qntfy/gomosesgo
+import:
+- package: github.com/gin-gonic/gin
+  version: ^1.1
+- package: github.com/kolo/xmlrpc
+- package: go.uber.org/zap
+  version: ^1
+- package: golang.org/x/text
+  subpackages:
+  - transform
